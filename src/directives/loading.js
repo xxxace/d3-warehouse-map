@@ -1,5 +1,6 @@
 import { createApp } from "vue"
 import Loading from "./loading.vue"
+
 export default function useLoadingDirective(app) {
     app.directive('loading', {
         mounted(el, binding) {
@@ -23,13 +24,6 @@ export default function useLoadingDirective(app) {
             }
         }
     })
-
-    app.directive('ace-loading-text', {
-        mounted(el, binding) {
-            console.log('ace-loading-text')
-            el.instance.setDiscription(binding.value)
-        }
-    })
 }
 
 function append(el) {
@@ -49,5 +43,4 @@ function append(el) {
 function remove(el) {
     el.classList.remove('v-ace-loading-relative')
     el.contains(el.instance.$el) && el.removeChild(el.instance.$el)
-
 }

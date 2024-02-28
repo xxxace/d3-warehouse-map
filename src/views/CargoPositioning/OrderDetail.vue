@@ -5,7 +5,7 @@
       <div>指令单号：{{ orderNo || "请选择要出库的指令单" }}</div>
       <div>出库明细：({{ tableData.length }})</div>
       <div class="action-panel">
-        <n-button @click="showMap">
+        <n-button @click="showMap" :disabled="loading">
           <template #icon>
             <n-icon :component="Map2" />
           </template>
@@ -16,50 +16,7 @@
 
     <n-layout position="absolute" style="top: 74px; bottom: 48px">
 
-      <n-layout-content ref="layoutContentRef" content-style="padding: 10px;">
-        <!-- <template v-for="item in items" :key="item">
-          <n-card
-            :class="[{ isChecked: item.checked }]"
-            size="small"
-            style="margin-bottom: 4px"
-          >
-            <div style="display: flex">
-              <div style="flex: 1">
-                <n-space vertical="">
-                  <div>
-                    <span>区域：{{ item.shelfNo }}</span>
-                    <span style="display: inline-block; margin-left: 10px"
-                      >数量：{{ item.items.reduce((t, n) => t + n.qty, 0) }}
-                    </span>
-                  </div>
-                  <div>
-                    <span>货架：</span>
-                    <n-tag
-                      v-for="e in item.items"
-                      :key="e.id"
-                      size="small"
-                      type="info"
-                      style="margin-right: 4px"
-                    >
-                      {{ e.id }}-{{ e.level }}
-                    </n-tag>
-                  </div>
-                </n-space>
-              </div>
-              <div>
-                <n-switch v-model:value="item.checked" />
-              </div>
-            </div>
-          </n-card>
-        </template> -->
-        <!-- <n-data-table
-          size="small"
-          v-model:checked-row-keys="checkedRowKeys"
-          :columns="columns"
-          :data="tableData"
-          :max-height="dataTableMaxHeight"
-          :row-key="(row) => row.rowKey"
-        /> -->
+      <n-layout-content content-style="padding: 10px;">
         <template v-for="item in dataGroup" :key="item.area">
           <n-card v-if="!item.checked" size="small" :class="[{ 'is-checked': item.checked }]" style="margin-bottom: 10px">
             <template #header>
@@ -68,13 +25,8 @@
                   <span style="font-weight: bold;">{{ item.area }}</span>
                   <span> ({{ item.items.length }}) </span>
                 </n-h3>
-                <!-- <n-tag size="small" :type="item.checked ? 'success' : 'default'"
-                    style="vertical-align: text-bottom; margin-left: 10px">{{ item.checked ? "已" : "未" }}确认</n-tag>
-            
-                <n-button :type="item.checked ? `error` : `primary`" size="small" ghost @click="handleConfirm(item)">
-                  {{ item.checked ? "取消" : "" }}确认
-                </n-button> -->
-                <n-button type="primary" size="small" ghost @click="handleConfirm(item)">
+
+                <n-button type="primary" size="small" ghost :disabled="loading" @click="handleConfirm(item)">
                   确认
                 </n-button>
               </n-space>
@@ -165,7 +117,7 @@
 </template>
 
 <script setup>
-import { computed, h, ref, watch, onMounted } from "vue";
+import { computed, ref, watch } from "vue";
 import {
   NButton,
   NCard,
@@ -179,7 +131,6 @@ import {
   NLayoutContent,
   NLayoutFooter,
   NSpace,
-  NSpin,
   NTag,
   NDataTable,
   useDialog,
@@ -206,6 +157,28 @@ const showModal = ref(false);
 const drawerActive = ref(false);
 const checkedListDrawerActive = ref(false);
 const mapActive = ref(false);
+const columns = ref([
+  {
+    title: "货位号",
+    key: "position",
+    width: 60,
+  },
+  {
+    title: "缸号",
+    key: "vat",
+    width: 100,
+  },
+  {
+    title: "布票号",
+    key: "no",
+    width: 100,
+  },
+  {
+    title: "数量",
+    key: "qty",
+    width: 60,
+  },
+]);
 
 function showMap() {
   if (!props.orderNo) {
@@ -287,6 +260,7 @@ watch(
     loading.value = true
     dataGroup.value = []
     tableData.value = []
+    await sleep(400)
     await loadData()
     loading.value = false
   }
@@ -296,7 +270,6 @@ function sleep(delay) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 const loadData = async () => {
-  await sleep(300)
   const newItems = [];
   const length = Math.floor(Math.random() * 24) + 1;
   const charactersArray = [
@@ -392,55 +365,6 @@ const loadData = async () => {
     };
   });
 }
-
-const columns = ref([
-  {
-    title: "货位号",
-    key: "position",
-    width: 60,
-  },
-  {
-    title: "缸号",
-    key: "vat",
-    width: 100,
-  },
-  {
-    title: "布票号",
-    key: "no",
-    width: 100,
-  },
-  {
-    title: "数量",
-    key: "qty",
-    width: 60,
-  },
-  // {
-  //   title: "状态",
-  //   key: "isChecked",
-  //   width: 60,
-  //   render(row, index) {
-  //     return h(NCheckbox, {
-  //       value: row.checked,
-  //       size: "large",
-  //       onUpdateChecked(v) {
-  //         tableData.value[index].checked = v;
-  //       },
-  //     });
-  //   },
-  // },
-  // {
-  //   title: "已检",
-  //   type: "selection",
-  //   width: 100,
-  // },
-]);
-
-const dataTableMaxHeight = ref(0);
-const layoutContentRef = ref(null);
-onMounted(() => {
-  const maxHeight = layoutContentRef.value.$el.parentElement.clientHeight - 63;
-  dataTableMaxHeight.value = maxHeight;
-});
 </script>
 
 <style lang="less" scoped>

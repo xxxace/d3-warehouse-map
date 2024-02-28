@@ -30,7 +30,6 @@
 <script setup>
 import { ref } from "vue";
 import {
-  NButton,
   NCard,
   NIcon,
   NH3,

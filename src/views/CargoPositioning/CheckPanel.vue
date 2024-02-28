@@ -9,15 +9,6 @@
         </template>
       </n-layout-sider>
       <n-layout content-style="padding: 4px;" :native-scrollbar="false">
-        <!-- <div style="overflow: hidden;height: 200px">
-          <div style="overflow: scroll;height: 100%">
-
-            <table>
-              <div v-for="item in 24" :key="item" style="position: relative;border: 1px solid #000; margin-bottom: 10px;">
-                {{ item }}</div>
-            </table>
-          </div>
-        </div> -->
         <template v-for="(area) in activeData" :key="area">
           <div v-if="!area.checked" class="group-card">
             <div>
@@ -41,97 +32,20 @@
             </template>
           </div>
         </template>
-
-        <!-- <n-data-table
-          size="small"
-          :columns="columns"
-          :data="activeData"
-          :max-height="160"
-          :row-key="(row) => row.rowKey"
-          v-model:checked-row-keys="checkedRowKeys"
-        /> -->
       </n-layout>
     </n-layout>
   </div>
 </template>
 <script setup>
-import { computed, h, ref } from "vue";
-import { NButton, NCheckbox, NTable, NDataTable, NSwitch, NSpace, NLayout, NLayoutSider } from "naive-ui";
+import { computed, ref } from "vue";
+import { NButton, NSpace, NLayout, NLayoutSider } from "naive-ui";
 
 const props = defineProps({
   data: Array,
 });
 const emits = defineEmits(["change"])
 const activeKey = ref(null);
-// const checkedRowKeys = defineModel("checkedRowKeys");
-// const charactersArray = [
-//   "A",
-//   "B",
-//   "C",
-//   "D",
-//   "E",
-//   "F",
-//   "G",
-//   "H",
-//   "I",
-//   "J",
-//   "K",
-//   "L",
-//   "M",
-//   "N",
-//   "O",
-//   "P",
-//   "Q",
-//   "R",
-//   "S",
-//   "T",
-//   "U",
-//   "V",
-//   "W",
-//   "X",
-//   "Y",
-//   "Z",
-// ];
 
-// const columns = ref([
-//     {
-//       title: "缸号",
-//       key: "vat",
-//     },
-//   {
-//     title: "货位号",
-//     key: "position",
-//     width: 60,
-//   },
-//   {
-//     title: "布票号",
-//     key: "no",
-//   },
-//   {
-//     title: "数量",
-//     key: "qty",
-//     width: 60,
-//   },
-//   {
-//     title: "状态",
-//     key: "isChecked",
-//     width: 60,
-//     render(row, index) {
-//       return h(NCheckbox, {
-//         value: row.isChecked,
-//         size: "large",
-//         onUpdateChecked(v) {
-//           data.value[index].isChecked = v;
-//         },
-//       });
-//     },
-//   },
-//   {
-//     title: "已检",
-//     type: "selection",
-//     width: 100,
-//   },
-// ]);
 const handleChecked = (area) => {
   emits('change', area.area)
 }
@@ -150,7 +64,6 @@ const activeAreas = computed(() => {
   activeKey.value = areaList[0]
   return areaList;
 });
-
 </script>
 <style lang="less" scoped>
 .check-panel {
@@ -159,8 +72,6 @@ const activeAreas = computed(() => {
   left: 10px;
   width: 340px;
   height: 210px;
-  // background-color: rgba(255, 255, 255, 0.3);
-  // backdrop-filter: blur(8px);
   border-radius: 8px;
   box-sizing: border-box;
   border: 1px solid #d4d4d4;

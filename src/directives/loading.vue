@@ -1,6 +1,11 @@
 <template>
-    <div class="v-ace-loading">
-        <n-spin size="medium" stroke="#2566ff">
+    <div class="v-ace-loading" @click.self="handleClick" @touch.self="handleClick">
+        <n-spin size="large">
+            <template #icon>
+                <n-icon color="#2566ff">
+                    <Loader />
+                </n-icon>
+            </template>
             <template #description>
                 <span style="color:#2566ff">{{ description }}</span>
             </template>
@@ -9,9 +14,15 @@
 </template>
 <script setup>
 import { ref } from 'vue'
-import { NSpin } from "naive-ui";
+import { NSpin, NIcon } from "naive-ui";
+import { Loader } from "@vicons/tabler";
 
 const description = ref('加载中...')
+
+const handleClick = (e) => {
+    e.stopPropagation()
+}
+
 defineExpose({
     setDiscription(text) {
         description.value = text
