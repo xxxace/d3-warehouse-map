@@ -1,8 +1,9 @@
 <template>
-  <n-layout position="absolute">
+  <n-layout position="absolute" v-loading="loading">
+
     <n-layout-header bordered style="padding: 10px">
       <div>指令单号：{{ orderNo || "请选择要出库的指令单" }}</div>
-      <div>出库明细：({{ items.length }})</div>
+      <div>出库明细：({{ tableData.length }})</div>
       <div class="action-panel">
         <n-button @click="showMap">
           <template #icon>
@@ -14,6 +15,7 @@
     </n-layout-header>
 
     <n-layout position="absolute" style="top: 74px; bottom: 48px">
+
       <n-layout-content ref="layoutContentRef" content-style="padding: 10px;">
         <!-- <template v-for="item in items" :key="item">
           <n-card
@@ -50,29 +52,58 @@
             </div>
           </n-card>
         </template> -->
-        <n-data-table
+        <!-- <n-data-table
           size="small"
+          v-model:checked-row-keys="checkedRowKeys"
           :columns="columns"
-          :data="data"
+          :data="tableData"
           :max-height="dataTableMaxHeight"
-        />
+          :row-key="(row) => row.rowKey"
+        /> -->
+        <template v-for="item in dataGroup" :key="item.area">
+          <n-card v-if="!item.checked" size="small" :class="[{ 'is-checked': item.checked }]" style="margin-bottom: 10px">
+            <template #header>
+              <n-space justify="space-between">
+                <n-h3 style="margin: 0;">
+                  <span style="font-weight: bold;">{{ item.area }}</span>
+                  <span> ({{ item.items.length }}) </span>
+                </n-h3>
+                <!-- <n-tag size="small" :type="item.checked ? 'success' : 'default'"
+                    style="vertical-align: text-bottom; margin-left: 10px">{{ item.checked ? "已" : "未" }}确认</n-tag>
+            
+                <n-button :type="item.checked ? `error` : `primary`" size="small" ghost @click="handleConfirm(item)">
+                  {{ item.checked ? "取消" : "" }}确认
+                </n-button> -->
+                <n-button type="primary" size="small" ghost @click="handleConfirm(item)">
+                  确认
+                </n-button>
+              </n-space>
+            </template>
+            <n-data-table size="small" :columns="columns" :data="item.items" />
+          </n-card>
+        </template>
+
       </n-layout-content>
+
     </n-layout>
 
+
     <n-layout-footer position="absolute" style="height: 48px; padding: 7px" bordered>
-      <div style="text-align: right">
-        <n-button type="primary">提交</n-button>
-      </div>
+      <n-space :item-style="{ flex: 1 }">
+        <div>
+          <n-button :disabled="checkItemCount <= 0" @click="checkedListDrawerActive = true">已确认列表 ({{ checkItemCount
+          }})</n-button>
+        </div>
+        <div style="text-align: right">
+          <n-button type="primary" :disabled="checkItemCount !== tableData.length">提交 ({{ checkItemCount }}/{{
+            tableData.length }})</n-button>
+        </div>
+      </n-space>
     </n-layout-footer>
   </n-layout>
 
-  <n-drawer
-    v-model:show="drawerActive"
-    width="100vw"
-    placement="right"
-    :on-after-enter="() => (mapActive = true)"
-    :on-after-leave="() => (mapActive = false)"
-  >
+  <n-drawer v-model:show="drawerActive" width="100vw" placement="right" :on-after-enter="handleEnter"
+    :on-after-leave="() => (mapActive = false)">
     <n-drawer-content :body-content-style="{ padding: 0 }" closable>
       <template #header>
         <n-space>
@@ -91,34 +122,54 @@
           <n-tag :bordered="false" type="info">指令单号：{{ orderNo }}</n-tag>
         </n-space>
       </template>
-      <OpenLayers
-        v-if="mapActive"
-        :high-light-items="items"
-        @feature-click="handelFeatureClick"
-      />
+      <OpenLayers v-if="mapActive" :high-light-items="items" @feature-click="handelFeatureClick" />
 
-      <CheckPanel />
+      <CheckPanel v-model:checked-row-keys="checkedRowKeys" :data="dataGroup" @change="handleCheckPanelChange" />
     </n-drawer-content>
   </n-drawer>
 
-  <n-modal
-    v-model:show="showModal"
-    preset="dialog"
-    :title="modalTitle"
-    :mask-closable="false"
-  >
-    <template v-for="item in modalContent" :key="item">
+
+  <n-drawer v-model:show="checkedListDrawerActive" width="410px" placement="right">
+    <n-drawer-content :body-content-style="{ padding: 0 }" closable>
+
+      <template #header>
+        已确认列表：({{ checkItemCount }})
+      </template>
+
+      <div style="padding: 10px;">
+        <template v-for="item in dataGroup" :key="item.area">
+          <n-card v-if="item.checked" size="small" :class="[{ 'is-checked': item.checked }]" style="margin-bottom: 10px">
+            <template #header>
+              <n-space justify="space-between">
+                <n-h3 style="margin: 0;">
+                  <span style="font-weight: bold;">{{ item.area }}</span>
+                  <span> ({{ item.items.length }}) </span>
+                </n-h3>
+                <n-button type="error" size="small" ghost @click="handleConfirm(item)">
+                  取消确认
+                </n-button>
+              </n-space>
+            </template>
+            <n-data-table size="small" :columns="columns" :data="item.items" />
+          </n-card>
+        </template>
+      </div>
+    </n-drawer-content>
+  </n-drawer>
+
+  <n-modal v-model:show="showModal" preset="dialog" :title="modalTitle" :mask-closable="false">
+    <template v-for=" item  in  modalContent " :key="item">
       <div>{{ item }}</div>
     </template>
   </n-modal>
 </template>
 
 <script setup>
-import { h, ref, watch, onMounted } from "vue";
+import { computed, h, ref, watch, onMounted } from "vue";
 import {
   NButton,
   NCard,
-  NCheckbox,
+  NH3,
   NModal,
   NDrawer,
   NDrawerContent,
@@ -127,10 +178,11 @@ import {
   NLayoutHeader,
   NLayoutContent,
   NLayoutFooter,
-  NSwitch,
   NSpace,
+  NSpin,
   NTag,
   NDataTable,
+  useDialog,
   useNotification,
 } from "naive-ui";
 import { BuildingWarehouse, Map2, Forklift } from "@vicons/tabler";
@@ -141,13 +193,18 @@ const props = defineProps({
   orderNo: [String, Number],
 });
 
+const dialog = useDialog();
 const notification = useNotification();
 const items = ref([]);
-
+const tableData = ref([]);
+const dataGroup = ref([]);
+const checkedRowKeys = ref([]);
 const modalTitle = ref("");
 const modalContent = ref([]);
+const loading = ref(false);
 const showModal = ref(false);
 const drawerActive = ref(false);
+const checkedListDrawerActive = ref(false);
 const mapActive = ref(false);
 
 function showMap() {
@@ -178,116 +235,170 @@ function handelFeatureClick(feature) {
   }
 }
 
+const checkItemCount = computed(() => {
+  return tableData.value.filter((item) => item.checked).length;
+});
+
+const handleConfirm = (item) => {
+  let type = 'info'
+  let content = `确定 ${item.area} 已全取？`
+
+  if (item.checked) {
+    type = 'warning'
+    content = `确定取消 ${item.area} 的确认？`
+  }
+  dialog[type]({
+    title: "提示",
+    content: content,
+    positiveText: "确定",
+    negativeText: "取消",
+    onPositiveClick: () => {
+      item.checked = !item.checked;
+      setItemsChecked(item.items, item.checked);
+    },
+  });
+};
+
+const handleCheckPanelChange = (area) => {
+  const checkItem = dataGroup.value.find(d => d.area === area)
+
+  if (checkItem) {
+    handleConfirm(checkItem)
+  }
+}
+
+const handleEnter = () => {
+  setTimeout(() => {
+    mapActive.value = true
+  }, 300)
+}
+
+function setItemsChecked(items, checked) {
+  if (items) {
+    items.forEach((item) => {
+      item.checked = checked;
+    });
+  }
+}
+
 watch(
   () => props.orderNo,
-  () => {
-    const newItems = [];
-    const length = Math.floor(Math.random() * 24) + 1;
-    const charactersArray = [
-      "A",
-      "B",
-      "C",
-      "D",
-      "E",
-      "F",
-      "G",
-      "H",
-      "I",
-      "J",
-      "K",
-      "L",
-      "M",
-      "N",
-      "O",
-      "P",
-      "Q",
-      "R",
-      "S",
-      "T",
-      "U",
-      "V",
-      "W",
-      "X",
-      "Y",
-      "Z",
-    ];
-
-    function generateItems(index) {
-      const items = [];
-      const count = index > 8 ? 11 : 8;
-      const randomCount = Math.floor(Math.random() * count) + 1;
-
-      for (let i = 0; i < randomCount; i++) {
-        const randomIndex = Math.floor(Math.random() * randomCount) + 1;
-        items.push({
-          id: `${charactersArray[index]}-${randomIndex}`,
-          area: charactersArray[index],
-          index: randomIndex,
-          level: Math.floor(Math.random() * 4) + 1,
-          qty: 22,
-        });
-      }
-
-      return items.sort((a, b) => a.index - b.index).sort((a, b) => a.level - b.level);
-    }
-
-    for (let i = 0; i < length; i++) {
-      newItems.push({
-        shelfNo: charactersArray[i],
-        items: [...generateItems(i)],
-        checked: false,
-      });
-    }
-
-    items.value = newItems;
+  async () => {
+    loading.value = true
+    dataGroup.value = []
+    tableData.value = []
+    await loadData()
+    loading.value = false
   }
 );
 
-const data = ref([
-  {
-    vat: "DF-24000381",
-    no: "20230316001",
-    qty: 20,
-    position: "A-1-1",
-  },
-  {
-    vat: "DF-24000381",
-    no: "20230316002",
-    qty: 20,
-    position: "A-1-1",
-  },
-  {
-    vat: "DF-24000381",
-    no: "20230316003",
-    qty: 20,
-    position: "A-1-2",
-  },
-  {
-    vat: "DF-24000381",
-    no: "20230316004",
-    qty: 20,
-    position: "A-1-3",
-  },
-  {
-    vat: "DF-24000381",
-    no: "20230316005",
-    qty: 20,
-    position: "A-1-3",
-  },
-  {
-    vat: "DF-24000381",
-    no: "20230316006",
-    qty: 20,
-    position: "A-1-2",
-  },
-  {
-    vat: "DF-24000381",
-    no: "20230316007",
-    qty: 20,
-    position: "A-1-2",
-  },
-]);
+function sleep(delay) {
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+const loadData = async () => {
+  await sleep(300)
+  const newItems = [];
+  const length = Math.floor(Math.random() * 24) + 1;
+  const charactersArray = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+  ];
+
+  function generateItems(index) {
+    const items = [];
+    const count = index > 8 ? 11 : 8;
+    const randomCount = Math.floor(Math.random() * count) + 1;
+
+    for (let i = 0; i < randomCount; i++) {
+      const randomIndex = Math.floor(Math.random() * randomCount) + 1;
+      const level = Math.floor(Math.random() * 4) + 1;
+      items.push({
+        id: `${charactersArray[index]}-${randomIndex}`,
+        rowKey: `${new Date().getTime()}${Math.floor(Math.random() * 1000)}${Math.floor(
+          Math.random() * 1000
+        )}${randomIndex}${level}`,
+        area: charactersArray[index],
+        index: randomIndex,
+        level: level,
+        vat: `DF-2400038${i}`,
+        no: `2023031600${i}`,
+        position: `${charactersArray[index]}-${randomIndex}-${level}`,
+        qty: 22,
+      });
+    }
+
+    return items.sort((a, b) => a.level - b.level).sort((a, b) => a.index - b.index);
+  }
+  tableData.value = [];
+  const itemsGroup = []
+  for (let i = 0; i < length; i++) {
+    const temp = {
+      shelfNo: charactersArray[i],
+      items: [...generateItems(i)],
+      checked: false,
+    }
+    newItems.push(temp);
+
+    itemsGroup.push(...temp.items)
+  }
+
+  tableData.value = itemsGroup;
+
+  items.value = newItems;
+  // console.log(dataGroup.value);
+
+  const areaMap = new Map();
+  tableData.value.forEach((item) => {
+    const areaKey = `${item.area}-${item.index}`;
+    let areaDataGroup = areaMap.get(areaKey);
+    if (!areaDataGroup) {
+      areaDataGroup = [];
+      areaMap.set(areaKey, areaDataGroup);
+    }
+
+    areaDataGroup.push(item);
+  });
+
+  // console.log(areaMap.entries());
+  dataGroup.value = Array.from(areaMap.entries()).map((item) => {
+    return {
+      area: item[0],
+      items: item[1],
+      checked: false,
+    };
+  });
+}
+
 const columns = ref([
+  {
+    title: "货位号",
+    key: "position",
+    width: 60,
+  },
   {
     title: "缸号",
     key: "vat",
@@ -303,25 +414,25 @@ const columns = ref([
     key: "qty",
     width: 60,
   },
-  {
-    title: "货位号",
-    key: "position",
-    width: 60,
-  },
-  {
-    title: "状态",
-    key: "isChecked",
-    width: 60,
-    render(row, index) {
-      return h(NCheckbox, {
-        value: row.isChecked,
-        size: "large",
-        onUpdateChecked(v) {
-          data.value[index].isChecked = v;
-        },
-      });
-    },
-  },
+  // {
+  //   title: "状态",
+  //   key: "isChecked",
+  //   width: 60,
+  //   render(row, index) {
+  //     return h(NCheckbox, {
+  //       value: row.checked,
+  //       size: "large",
+  //       onUpdateChecked(v) {
+  //         tableData.value[index].checked = v;
+  //       },
+  //     });
+  //   },
+  // },
+  // {
+  //   title: "已检",
+  //   type: "selection",
+  //   width: 100,
+  // },
 ]);
 
 const dataTableMaxHeight = ref(0);
@@ -341,6 +452,12 @@ onMounted(() => {
 
 .isChecked {
   border: 1px solid #1890ff;
+  box-sizing: border-box;
+}
+
+.is-checked {
+  border: 3px solid #2897ff;
+  border-radius: 8px;
   box-sizing: border-box;
 }
 </style>

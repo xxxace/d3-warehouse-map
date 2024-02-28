@@ -1,13 +1,15 @@
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
     <n-notification-provider>
-      <RouterView />
+      <n-dialog-provider>
+        <RouterView />
+      </n-dialog-provider>
     </n-notification-provider>
   </n-config-provider>
 </template>
 
 <script setup>
-import { NConfigProvider, NNotificationProvider } from "naive-ui";
+import { NConfigProvider, NDialogProvider, NNotificationProvider } from "naive-ui";
 import { RouterView } from "vue-router";
 
 const themeOverrides = {

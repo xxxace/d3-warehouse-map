@@ -1,38 +1,15 @@
 <template>
-  <ol-map
-    ref="oMap"
-    :moveTolerance="6"
-    :loadTilesWhileAnimating="true"
-    :loadTilesWhileInteracting="true"
-    :pixelRatio="pixelRatio"
-    :controls="[]"
-    style="height: 100%; background-color: #d6d6d6"
-    @singleclick="handleClick"
-  >
-    <ol-view
-      ref="view"
-      :center="center"
-      :constrainOnlyCenter="false"
-      :enableRotation="false"
-      :zoom="zoom"
-      :minZoom="1"
-      :maxZoom="4"
-      :projection="imgProjection"
-    />
+  <ol-map ref="oMap" :moveTolerance="6" :loadTilesWhileAnimating="true" :loadTilesWhileInteracting="true"
+    :pixelRatio="pixelRatio" :controls="[]" style="height: 100%; background-color: #d6d6d6" @singleclick="handleClick">
+    <ol-view ref="view" :center="center" :constrainOnlyCenter="false" :enableRotation="false" :zoom="zoom" :minZoom="1"
+      :maxZoom="4" :projection="imgProjection" />
 
     <ol-image-layer id="ace">
-      <ol-source-image-static
-        :url="imgUrl"
-        :imageSize="size"
-        :imageExtent="extent"
-        :projection="imgProjection"
-      ></ol-source-image-static>
+      <ol-source-image-static :url="imgUrl" :imageSize="size" :imageExtent="extent"
+        :projection="imgProjection"></ol-source-image-static>
     </ol-image-layer>
 
-    <!-- <ol-overlay :position="[260, 1361]">
-      <div class="overlay-content">xxxxF</div>
-    </ol-overlay> -->
-    <ol-mouseposition-control />
+    <!-- <ol-mouseposition-control /> -->
   </ol-map>
 </template>
 
@@ -187,7 +164,7 @@ function randomHightLight() {
         layer,
         id: item.id,
         styleFunction: (feature) => {
-          feature.style_.fill_.setColor("rgba(160, 207, 255,0.5)");
+          feature.style_.fill_.setColor("rgba(160, 207, 255,0.3)");
           feature.style_.stroke_.setColor("rgb(64, 158, 255)");
           highLightFeatureMap.set(item.id, feature);
         },
@@ -321,11 +298,3 @@ onMounted(() => {
   // addSelectInteraction();
 });
 </script>
-
-<style lang="less" scoped>
-.overlay-content {
-  background-color: #ffffff;
-  width: 600px;
-  height: 300px;
-}
-</style>

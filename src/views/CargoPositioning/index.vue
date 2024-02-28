@@ -16,13 +16,8 @@
     <n-layout position="absolute" style="top: 48px" has-sider>
       <n-layout-sider content-style="padding: 10px;" :native-scrollbar="false" bordered>
         <template v-for="item in 24" :key="item">
-          <n-card
-            :class="[{ 'tab-item': currentItem === item }]"
-            :title="`出库指令单: ${item}`"
-            size="small"
-            style="margin-bottom: 6px"
-            @click="setCurrentItem(item)"
-          >
+          <n-card :class="['tab-item', { 'tab-item-active': currentItem === item }]" :title="`出库指令单: ${item}`"
+            size="small" @click="setCurrentItem(item)">
           </n-card>
         </template>
       </n-layout-sider>
@@ -57,7 +52,12 @@ function setCurrentItem(item) {
 <style lang="less" scope>
 .tab-item {
   box-sizing: border-box;
-  border: 1px solid #309bff !important;
-  box-shadow: 0 0 0 3px rgba(63, 114, 255, 0.3);
+  margin-bottom: 6px;
+  cursor: pointer;
+
+  &-active {
+    border: 1px solid #309bff !important;
+    box-shadow: 0 0 0 3px rgba(63, 114, 255, 0.3);
+  }
 }
 </style>
